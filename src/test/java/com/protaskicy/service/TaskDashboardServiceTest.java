@@ -43,11 +43,11 @@ class TaskDashboardServiceTest {
         try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
             mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(currentUserLogin));
 
-            when(taskRepository.countByAssignedToIsCurrentUserLogin(currentUserLogin)).thenReturn(5L);
-            when(taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.TODO)).thenReturn(2L);
-            when(taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS)).thenReturn(1L);
-            when(taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.DONE)).thenReturn(1L);
-            when(taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.CANCELLED)).thenReturn(1L);
+            when(taskRepository.countByAssignedTo(currentUserLogin)).thenReturn(5L);
+            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.TODO)).thenReturn(2L);
+            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS)).thenReturn(1L);
+            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.DONE)).thenReturn(1L);
+            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.CANCELLED)).thenReturn(1L);
 
             TaskStatsDTO result = taskDashboardService.getTaskStats();
 
@@ -57,11 +57,11 @@ class TaskDashboardServiceTest {
             assertThat(result.getDoneTasks()).isEqualTo(1L);
             assertThat(result.getCancelledTasks()).isEqualTo(1L);
 
-            verify(taskRepository, times(1)).countByAssignedToIsCurrentUserLogin(currentUserLogin);
-            verify(taskRepository, times(1)).countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.TODO);
-            verify(taskRepository, times(1)).countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS);
-            verify(taskRepository, times(1)).countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.DONE);
-            verify(taskRepository, times(1)).countByAssignedToIsCurrentUserLoginAndStatus(currentUserLogin, TaskStatus.CANCELLED);
+            verify(taskRepository, times(1)).countByAssignedTo(currentUserLogin);
+            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.TODO);
+            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS);
+            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.DONE);
+            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.CANCELLED);
         }
     }
 
@@ -74,6 +74,7 @@ class TaskDashboardServiceTest {
                 new Object[] { TaskStatus.TODO, 2L },
                 new Object[] { TaskStatus.DONE, 3L }
             );
+            // Assuming countTasksByStatusForCurrentUser() is correctly implemented in TaskRepository
             when(taskRepository.countTasksByStatusForCurrentUser()).thenReturn(mockDistribution);
 
             List<TaskStatusDistributionDTO> result = taskDashboardService.getTaskStatusDistribution();
@@ -98,6 +99,7 @@ class TaskDashboardServiceTest {
                 new Object[] { now.minus(7, ChronoUnit.DAYS), 5L },
                 new Object[] { now, 10L }
             );
+            // Assuming countCompletedTasksByWeekForCurrentUser() is correctly implemented in TaskRepository
             when(taskRepository.countCompletedTasksByWeekForCurrentUser()).thenReturn(mockEvolution);
 
             List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution();
