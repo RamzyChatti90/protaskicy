@@ -63,12 +63,41 @@ public class TaskDashboardService {
             .stream()
             .map(obj -> {
                 LocalDate date = null;
-                if (obj[0] instanceof Date) {
-                    date = ((Date) obj[0]).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                } else if (obj[0] instanceof LocalDate) {
-                    date = (LocalDate) obj[0];
+                if (obj[0] != null) {
+                    if (obj[0] instanceof LocalDate) {
+                        date = (LocalDate) obj[0];
+                    } else if (obj[0] instanceof Date) { // Covers java.util.Date, java.sql.Date, java.sql.Timestamp
+                        date = ((Date) obj[0]).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    } else if (obj[0] instanceof String) {
+                        try {
+                            date = LocalDate.parse((String) obj[0]);
+                        } catch (java.time.format.DateTimeParseException e) {
+                            log.warn("Failed to parse date string '{}' from database result. Setting date to null.", obj[0], e);
+                            // date remains null
+                        }
+                    } else {
+                        log.warn("Unexpected type for date object from database: {}. Value: {}. Setting date to null.", obj[0].getClass().getName(), obj[0]);
+                        // date remains null
+                    }
                 }
-                Long count = (Long) obj[1];
+
+                Long count = 0L; // Default value if null or unparseable
+                if (obj[1] != null) {
+                    if (obj[1] instanceof Long) {
+                        count = (Long) obj[1];
+                    } else if (obj[1] instanceof Integer) {
+                        count = ((Integer) obj[1]).longValue();
+                    } else if (obj[1] instanceof java.math.BigDecimal) {
+                        count = ((java.math.BigDecimal) obj[1]).longValue();
+                    } else if (obj[1] instanceof java.math.BigInteger) {
+                        count = ((java.math.BigInteger) obj[1]).longValue();
+                    } else if (obj[1] instanceof Double) {
+                        count = ((Double) obj[1]).longValue();
+                    } else {
+                        log.warn("Unexpected type for count object from database: {}. Value: {}. Setting count to 0L.", obj[1].getClass().getName(), obj[1]);
+                        // count remains 0L
+                    }
+                }
                 return new TaskCompletionEvolutionDTO(date, count);
             })
             .collect(Collectors.toList());
