@@ -6,6 +6,7 @@ import com.protaskicy.service.dto.TaskStatsDTO;
 import com.protaskicy.service.dto.TaskStatusDistributionDTO;
 import java.util.List;
 import java.util.Optional;
+import com.protaskicy.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +61,7 @@ public class TaskDashboardResource {
     @GetMapping("/task-completion-evolution")
     public ResponseEntity<List<TaskCompletionEvolutionDTO>> getTaskCompletionEvolution(@RequestParam(defaultValue = "7") int days) {
         log.debug("REST request to get Task Completion Evolution for {} days", days);
-        Optional<List<TaskCompletionEvolutionDTO>> evolution = taskDashboardService.getTaskCompletionEvolution(days);
-        return ResponseUtil.wrapOrNotFound(evolution);
+        List<TaskCompletionEvolutionDTO> evolution = taskDashboardService.getTaskCompletionEvolution(SecurityUtils.getCurrentUserLogin().orElseThrow(), days);
+        return ResponseEntity.ok().body(evolution);
     }
 }
