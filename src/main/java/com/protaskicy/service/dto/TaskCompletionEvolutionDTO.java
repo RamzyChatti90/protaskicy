@@ -1,28 +1,26 @@
 package com.protaskicy.service.dto;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.Objects;
 
 public class TaskCompletionEvolutionDTO implements Serializable {
 
-    private LocalDate date;
+    private Instant date;
     private Long completedTasksCount;
 
-    public TaskCompletionEvolutionDTO() {
-        // Empty constructor needed for Jackson
-    }
+    public TaskCompletionEvolutionDTO() {}
 
-    public TaskCompletionEvolutionDTO(LocalDate date, Long completedTasksCount) {
+    public TaskCompletionEvolutionDTO(Instant date, Long completedTasksCount) {
         this.date = date;
         this.completedTasksCount = completedTasksCount;
     }
 
-    public LocalDate getDate() {
+    public Instant getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(Instant date) {
         this.date = date;
     }
 
@@ -54,10 +52,8 @@ public class TaskCompletionEvolutionDTO implements Serializable {
     @Override
     public String toString() {
         return "TaskCompletionEvolutionDTO{" +
-            "date=" +
-            date +
-            ", completedTasksCount=" +
-            completedTasksCount +
+            "date=" + date +
+            ", completedTasksCount=" + completedTasksCount +
             '}';
     }
 }
