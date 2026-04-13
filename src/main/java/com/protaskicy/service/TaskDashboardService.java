@@ -66,19 +66,17 @@ public class TaskDashboardService {
      * @param days the number of days to look back.
      * @return a list of TaskCompletionEvolutionDTO.
      */
-    public Optional<List<TaskCompletionEvolutionDTO>> getTaskCompletionEvolution(int days) {
-        return SecurityUtils.getCurrentUserLogin().map(login -> {
-            LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minusDays(days - 1);
+    public List<TaskCompletionEvolutionDTO> getTaskCompletionEvolution(String login, int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
 
-            Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-            Instant endInstant = endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).minusNanos(1).toInstant();
+        Instant startInstant = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endInstant = endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).minusNanos(1).toInstant();
 
-            List<Object[]> results = taskRepository.countCompletedTasksByDayForUser(login, TaskStatus.DONE, startInstant, endInstant);
+        List<Object[]> results = taskRepository.countCompletedTasksByDayForUser(login, TaskStatus.DONE, startInstant, endInstant);
 
-            return results.stream()
-                .map(result -> new TaskCompletionEvolutionDTO((LocalDate) result[0], ((Number) result[1]).longValue()))
-                .collect(Collectors.toList());
-        });
+        return results.stream()
+            .map(result -> new TaskCompletionEvolutionDTO((LocalDate) result[0], ((Number) result[1]).longValue()))
+            .collect(Collectors.toList());
     }
 }
