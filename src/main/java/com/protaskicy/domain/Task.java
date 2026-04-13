@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.io.Serializable;
 import java.time.Instant;
+import com.protaskicy.domain.enumeration.TaskStatus;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -35,7 +36,13 @@ public class Task implements Serializable {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private TaskStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User assignedTo;
 
     public Long getId() {
         return this.id;
@@ -88,6 +95,32 @@ public class Task implements Serializable {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+    public TaskStatus getStatus() {
+        return this.status;
+    }
+
+    public Task status(TaskStatus status) {
+        this.setStatus(status);
+        return this;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public User getAssignedTo() {
+        return this.assignedTo;
+    }
+
+    public Task assignedTo(User assignedTo) {
+        this.setAssignedTo(assignedTo);
+        return this;
+    }
+
+    public void setAssignedTo(User assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
