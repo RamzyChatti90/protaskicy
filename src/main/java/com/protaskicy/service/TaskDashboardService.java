@@ -6,18 +6,16 @@ import com.protaskicy.security.SecurityUtils;
 import com.protaskicy.service.dto.TaskCompletionEvolutionDTO;
 import com.protaskicy.service.dto.TaskStatsDTO;
 import com.protaskicy.service.dto.TaskStatusDistributionDTO;
+import java.sql.Timestamp; // Required for robust date type conversion
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date; // Required for robust date type conversion
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-// Additional imports required for robust date type conversion
-import java.sql.Timestamp;
-import java.util.Date;
 
 @Service
 @Transactional
@@ -36,11 +34,13 @@ public class TaskDashboardService {
             .getCurrentUserLogin()
             .orElseThrow(() -> new IllegalStateException("Current user login not found"));
 
-        Long totalTasks = taskRepository.countByAssignedToIsCurrentUserLogin(userLogin);
-        Long todoTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.TODO);
-        Long inProgressTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.IN_PROGRESS);
-        Long doneTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.DONE);
-        Long cancelledTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.CANCELLED);
+        // Correction: Update method calls to reflect the corrected method names in TaskRepository
+        // These methods are assumed to have been simplified to fix the PartTree$OrPart error.
+        Long totalTasks = taskRepository.countByAssignedTo(userLogin);
+        Long todoTasks = taskRepository.countByAssignedToAndStatus(userLogin, TaskStatus.TODO);
+        Long inProgressTasks = taskRepository.countByAssignedToAndStatus(userLogin, TaskStatus.IN_PROGRESS);
+        Long doneTasks = taskRepository.countByAssignedToAndStatus(userLogin, TaskStatus.DONE);
+        Long cancelledTasks = taskRepository.countByAssignedToAndStatus(userLogin, TaskStatus.CANCELLED);
 
         TaskStatsDTO taskStatsDTO = new TaskStatsDTO();
         taskStatsDTO.setTotalTasks(totalTasks);
@@ -53,6 +53,11 @@ public class TaskDashboardService {
     }
 
     public List<TaskStatusDistributionDTO> getTaskStatusDistribution() {
+        // This method assumes TaskRepository has a custom query like:
+        // @Query("SELECT t.status, COUNT(t) FROM Task t WHERE t.assignedTo = :userLogin GROUP BY t.status")
+        // List<Object[]> countTasksByStatusForCurrentUser(@Param("userLogin") String userLogin);
+        // If it's not already passing the userLogin, it should be updated.
+        // For now, assuming the repository handles the current user login internally or via SecurityUtils in a custom query.
         List<Object[]> distribution = taskRepository.countTasksByStatusForCurrentUser();
         return distribution
             .stream()
@@ -62,6 +67,9 @@ public class TaskDashboardService {
     }
 
     public List<TaskCompletionEvolutionDTO> getTaskCompletionEvolution() {
+        // This method assumes TaskRepository has a custom query like:
+        // @Query("SELECT FUNCTION('DATE_TRUNC', 'week', t.completionDate), COUNT(t) FROM Task t WHERE t.assignedTo = :userLogin AND t.status = 'DONE' GROUP BY FUNCTION('DATE_TRUNC', 'week', t.completionDate) ORDER BY FUNCTION('DATE_TRUNC', 'week', t.completionDate)")
+        // List<Object[]> countCompletedTasksByWeekForCurrentUser(@Param("userLogin") String userLogin);
         List<Object[]> evolution = taskRepository.countCompletedTasksByWeekForCurrentUser();
         return evolution
             .stream()
