@@ -9,7 +9,17 @@ public class TaskStatsDTO implements Serializable {
     private Long todoTasks;
     private Long inProgressTasks;
     private Long doneTasks;
-    private Long cancelledTasks;
+
+    public TaskStatsDTO() {
+        // Empty constructor needed for Jackson
+    }
+
+    public TaskStatsDTO(Long totalTasks, Long todoTasks, Long inProgressTasks, Long doneTasks) {
+        this.totalTasks = totalTasks;
+        this.todoTasks = todoTasks;
+        this.inProgressTasks = inProgressTasks;
+        this.doneTasks = doneTasks;
+    }
 
     public Long getTotalTasks() {
         return totalTasks;
@@ -43,45 +53,29 @@ public class TaskStatsDTO implements Serializable {
         this.doneTasks = doneTasks;
     }
 
-    public Long getCancelledTasks() {
-        return cancelledTasks;
-    }
-
-    public void setCancelledTasks(Long cancelledTasks) {
-        this.cancelledTasks = cancelledTasks;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         TaskStatsDTO that = (TaskStatsDTO) o;
-        return (
-            Objects.equals(totalTasks, that.totalTasks) &&
-            Objects.equals(todoTasks, that.todoTasks) &&
-            Objects.equals(inProgressTasks, that.inProgressTasks) &&
-            Objects.equals(doneTasks, that.doneTasks) &&
-            Objects.equals(cancelledTasks, that.cancelledTasks)
-        );
+        return Objects.equals(totalTasks, that.totalTasks) &&
+               Objects.equals(todoTasks, that.todoTasks) &&
+               Objects.equals(inProgressTasks, that.inProgressTasks) &&
+               Objects.equals(doneTasks, that.doneTasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(totalTasks, todoTasks, inProgressTasks, doneTasks, cancelledTasks);
+        return Objects.hash(totalTasks, todoTasks, inProgressTasks, doneTasks);
     }
 
     @Override
     public String toString() {
         return "TaskStatsDTO{" +
-            "totalTasks=" + totalTasks +
-            ", todoTasks=" + todoTasks +
-            ", inProgressTasks=" + inProgressTasks +
-            ", doneTasks=" + doneTasks +
-            ", cancelledTasks=" + cancelledTasks +
-            '}';
+               "totalTasks=" + totalTasks +
+               ", todoTasks=" + todoTasks +
+               ", inProgressTasks=" + inProgressTasks +
+               ", doneTasks=" + doneTasks +
+               '}';
     }
 }
