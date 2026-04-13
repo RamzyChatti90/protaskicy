@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * REST controller for managing Task Dashboard data.
- */
 @RestController
 @RequestMapping("/api/dashboard")
 public class TaskDashboardResource {
@@ -27,39 +24,24 @@ public class TaskDashboardResource {
         this.taskDashboardService = taskDashboardService;
     }
 
-    /**
-     * {@code GET /dashboard/stats} : get current user task statistics.
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the taskStatsDTO.
-     */
-    @GetMapping("/stats")
+    @GetMapping("/task-stats")
     public ResponseEntity<TaskStatsDTO> getTaskStats() {
-        log.debug("REST request to get TaskStatsDTO for current user");
-        TaskStatsDTO taskStats = taskDashboardService.getTaskStatsForCurrentUser();
-        return ResponseEntity.ok().body(taskStats);
+        log.debug("REST request to get Task Stats for current user");
+        TaskStatsDTO taskStats = taskDashboardService.getTaskStats();
+        return ResponseEntity.ok(taskStats);
     }
 
-    /**
-     * {@code GET /dashboard/status-distribution} : get current user task status distribution.
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the list of taskStatusDistributionDTOs.
-     */
-    @GetMapping("/status-distribution")
+    @GetMapping("/task-status-distribution")
     public ResponseEntity<List<TaskStatusDistributionDTO>> getTaskStatusDistribution() {
-        log.debug("REST request to get TaskStatusDistributionDTO for current user");
-        List<TaskStatusDistributionDTO> distribution = taskDashboardService.getTaskStatusDistributionForCurrentUser();
-        return ResponseEntity.ok().body(distribution);
+        log.debug("REST request to get Task Status Distribution for current user");
+        List<TaskStatusDistributionDTO> distribution = taskDashboardService.getTaskStatusDistribution();
+        return ResponseEntity.ok(distribution);
     }
 
-    /**
-     * {@code GET /dashboard/completion-evolution} : get current user task completion evolution.
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the list of taskCompletionEvolutionDTOs.
-     */
-    @GetMapping("/completion-evolution")
+    @GetMapping("/task-completion-evolution")
     public ResponseEntity<List<TaskCompletionEvolutionDTO>> getTaskCompletionEvolution() {
-        log.debug("REST request to get TaskCompletionEvolutionDTO for current user");
-        List<TaskCompletionEvolutionDTO> evolution = taskDashboardService.getTaskCompletionEvolutionForCurrentUser();
-        return ResponseEntity.ok().body(evolution);
+        log.debug("REST request to get Task Completion Evolution for current user");
+        List<TaskCompletionEvolutionDTO> evolution = taskDashboardService.getTaskCompletionEvolution();
+        return ResponseEntity.ok(evolution);
     }
 }
