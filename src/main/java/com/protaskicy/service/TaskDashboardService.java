@@ -59,7 +59,7 @@ public class TaskDashboardService {
         Instant endInstant = endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant(); // Include the end date fully
 
         return taskRepository
-            .countCompletedTasksByDayForUser(userLogin, startInstant, endInstant)
+            .countCompletedTasksByDayForUser(userLogin, TaskStatus.DONE, startInstant, endInstant) // FIX: Added TaskStatus.DONE
             .stream()
             .map(obj -> {
                 LocalDate date = null;
