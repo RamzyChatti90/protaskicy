@@ -92,7 +92,7 @@ class TaskDashboardServiceTest {
                 new Object[] { today, 2L }
             )
         );
-        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(2).orElseThrow();
+        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(USER_LOGIN, 2);
 
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(
