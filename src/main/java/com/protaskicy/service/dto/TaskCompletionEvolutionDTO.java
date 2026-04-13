@@ -7,15 +7,15 @@ import java.util.Objects;
 public class TaskCompletionEvolutionDTO implements Serializable {
 
     private LocalDate date;
-    private Long completedTasks;
+    private Long completedTasksCount;
 
     public TaskCompletionEvolutionDTO() {
-        // Empty constructor needed for Jackson
+        // Empty constructor needed for Jackson.
     }
 
-    public TaskCompletionEvolutionDTO(LocalDate date, Long completedTasks) {
+    public TaskCompletionEvolutionDTO(LocalDate date, Long completedTasksCount) {
         this.date = date;
-        this.completedTasks = completedTasks;
+        this.completedTasksCount = completedTasksCount;
     }
 
     public LocalDate getDate() {
@@ -26,12 +26,12 @@ public class TaskCompletionEvolutionDTO implements Serializable {
         this.date = date;
     }
 
-    public Long getCompletedTasks() {
-        return completedTasks;
+    public Long getCompletedTasksCount() {
+        return completedTasksCount;
     }
 
-    public void setCompletedTasks(Long completedTasks) {
-        this.completedTasks = completedTasks;
+    public void setCompletedTasksCount(Long completedTasksCount) {
+        this.completedTasksCount = completedTasksCount;
     }
 
     @Override
@@ -40,19 +40,19 @@ public class TaskCompletionEvolutionDTO implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         TaskCompletionEvolutionDTO that = (TaskCompletionEvolutionDTO) o;
         return Objects.equals(date, that.date) &&
-               Objects.equals(completedTasks, that.completedTasks);
+               Objects.equals(completedTasksCount, that.completedTasksCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, completedTasks);
+        return Objects.hash(date, completedTasksCount);
     }
 
     @Override
     public String toString() {
         return "TaskCompletionEvolutionDTO{" +
                "date=" + date +
-               ", completedTasks=" + completedTasks +
+               ", completedTasksCount=" + completedTasksCount +
                '}';
     }
 }
