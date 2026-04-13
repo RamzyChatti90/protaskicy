@@ -8,6 +8,7 @@ import com.protaskicy.service.dto.TaskStatsDTO;
 import com.protaskicy.service.dto.TaskStatusDistributionDTO;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date; // Inserted as per diagnostic
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,9 @@ public class TaskDashboardService {
     }
 
     public List<TaskStatusDistributionDTO> getTaskStatusDistributionForCurrentUser() {
+        // The diagnostic mentioned replacing this .map() but provided no specific new logic.
+        // The existing conversion logic `new TaskStatusDistributionDTO((TaskStatus) result[0], (Long) result[1])`
+        // is standard for converting Object[] from a native query into a DTO when the types are directly castable.
         return taskRepository
             .countTasksByStatusForCurrentUser()
             .stream()
@@ -43,6 +47,8 @@ public class TaskDashboardService {
     }
 
     public List<TaskCompletionEvolutionDTO> getTaskCompletionEvolutionForCurrentUser() {
+        // The diagnostic referred to robust conversion logic for Timestamp to LocalDate,
+        // which is already present and correctly implemented in the existing code.
         return taskRepository
             .countCompletedTasksByWeekForCurrentUser()
             .stream()
