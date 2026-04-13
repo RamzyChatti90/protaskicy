@@ -102,7 +102,6 @@ class TaskDashboardServiceTest {
     }
 
     @Test
-    @Test
     void getTaskCompletionEvolution_shouldReturnEmptyListWhenNoTasksCompletedFor7Days() {
         when(
             taskRepository.countCompletedTasksByDayForUser(
