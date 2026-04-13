@@ -6,11 +6,12 @@ import com.protaskicy.security.SecurityUtils;
 import com.protaskicy.service.dto.TaskCompletionEvolutionDTO;
 import com.protaskicy.service.dto.TaskStatsDTO;
 import com.protaskicy.service.dto.TaskStatusDistributionDTO;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date; // Inserted as per diagnostic
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,46 +19,48 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class TaskDashboardService {
 
+    private final Logger log = LoggerFactory.getLogger(TaskDashboardService.class);
+
     private final TaskRepository taskRepository;
 
     public TaskDashboardService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
     }
 
-    public TaskStatsDTO getTaskStatsForCurrentUser() {
-        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new IllegalStateException("User not authenticated"));
+    public TaskStatsDTO getTaskStats() {
+        String userLogin = SecurityUtils
+            .getCurrentUserLogin()
+            .orElseThrow(() -> new IllegalStateException("Current user login not found"));
 
         Long totalTasks = taskRepository.countByAssignedToIsCurrentUserLogin(userLogin);
         Long todoTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.TODO);
         Long inProgressTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.IN_PROGRESS);
         Long doneTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.DONE);
+        Long cancelledTasks = taskRepository.countByAssignedToIsCurrentUserLoginAndStatus(userLogin, TaskStatus.CANCELLED);
 
-        return new TaskStatsDTO(totalTasks, todoTasks, inProgressTasks, doneTasks);
+        TaskStatsDTO taskStatsDTO = new TaskStatsDTO();
+        taskStatsDTO.setTotalTasks(totalTasks);
+        taskStatsDTO.setTodoTasks(todoTasks);
+        taskStatsDTO.setInProgressTasks(inProgressTasks);
+        taskStatsDTO.setDoneTasks(doneTasks);
+        taskStatsDTO.setCancelledTasks(cancelledTasks);
+
+        return taskStatsDTO;
     }
 
-    public List<TaskStatusDistributionDTO> getTaskStatusDistributionForCurrentUser() {
-        // The diagnostic mentioned replacing this .map() but provided no specific new logic.
-        // The existing conversion logic `new TaskStatusDistributionDTO((TaskStatus) result[0], (Long) result[1])`
-        // is standard for converting Object[] from a native query into a DTO when the types are directly castable.
-        return taskRepository
-            .countTasksByStatusForCurrentUser()
+    public List<TaskStatusDistributionDTO> getTaskStatusDistribution() {
+        List<Object[]> distribution = taskRepository.countTasksByStatusForCurrentUser();
+        return distribution
             .stream()
-            .map(result -> new TaskStatusDistributionDTO((TaskStatus) result[0], (Long) result[1]))
+            .map(obj -> new TaskStatusDistributionDTO((TaskStatus) obj[0], (Long) obj[1]))
             .collect(Collectors.toList());
     }
 
-    public List<TaskCompletionEvolutionDTO> getTaskCompletionEvolutionForCurrentUser() {
-        // The diagnostic referred to robust conversion logic for Timestamp to LocalDate,
-        // which is already present and correctly implemented in the existing code.
-        return taskRepository
-            .countCompletedTasksByWeekForCurrentUser()
+    public List<TaskCompletionEvolutionDTO> getTaskCompletionEvolution() {
+        List<Object[]> evolution = taskRepository.countCompletedTasksByWeekForCurrentUser();
+        return evolution
             .stream()
-            .map(result -> {
-                // result[0] is a java.sql.Timestamp, convert to LocalDate
-                LocalDate date = ((java.sql.Timestamp) result[0]).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                Long count = (Long) result[1];
-                return new TaskCompletionEvolutionDTO(date, count);
-            })
+            .map(obj -> new TaskCompletionEvolutionDTO(((Instant) obj[0]).truncatedTo(ChronoUnit.DAYS), (Long) obj[1]))
             .collect(Collectors.toList());
     }
 }
