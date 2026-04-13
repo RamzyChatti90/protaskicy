@@ -50,7 +50,7 @@ class TaskDashboardServiceTest {
         when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.IN_PROGRESS)).thenReturn(5L);
         when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.DONE)).thenReturn(2L);
 
-        TaskStatsDTO result = taskDashboardService.getTaskStats(USER_LOGIN);
+        TaskStatsDTO result = taskDashboardService.getTaskStats().orElseThrow();
 
         assertThat(result.getTotalTasks()).isEqualTo(10L);
         assertThat(result.getTodoTasks()).isEqualTo(3L);
@@ -64,13 +64,13 @@ class TaskDashboardServiceTest {
         when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.IN_PROGRESS)).thenReturn(5L);
         when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.DONE)).thenReturn(2L);
 
-        List<TaskStatusDistributionDTO> result = taskDashboardService.getTaskStatusDistribution(USER_LOGIN);
+        List<TaskStatusDistributionDTO> result = taskDashboardService.getTaskStatusDistribution().orElseThrow();
 
         assertThat(result).hasSize(3);
         assertThat(result).containsExactlyInAnyOrder(
-            new TaskStatusDistributionDTO("TODO", 3L),
-            new TaskStatusDistributionDTO("IN_PROGRESS", 5L),
-            new TaskStatusDistributionDTO("DONE", 2L)
+            new TaskStatusDistributionDTO(TaskStatus.TODO, 3L),
+            new TaskStatusDistributionDTO(TaskStatus.IN_PROGRESS, 5L),
+            new TaskStatusDistributionDTO(TaskStatus.DONE, 2L)
         );
     }
 
@@ -82,8 +82,10 @@ class TaskDashboardServiceTest {
         when(
             taskRepository.countCompletedTasksByDayForUser(
                 eq(USER_LOGIN),
+                eq(TaskStatus.DONE),
                 any(Instant.class),
                 any(Instant.class)
+            )
             )
         )
             .thenReturn(
@@ -91,7 +93,7 @@ class TaskDashboardServiceTest {
                     new Object[] { yesterday, 1L },
                     new Object[] { today, 2L }
                 )
-            );
+        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(2).orElseThrow();
 
         List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(USER_LOGIN, 2);
 
@@ -103,13 +105,15 @@ class TaskDashboardServiceTest {
     }
 
     @Test
-    void getTaskCompletionEvolution_shouldHandleEmptyResult() {
-        when(
             taskRepository.countCompletedTasksByDayForUser(
                 eq(USER_LOGIN),
+                eq(TaskStatus.DONE),
                 any(Instant.class),
                 any(Instant.class)
             )
+                any(Instant.class),
+                any(Instant.class)
+        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(7).orElseThrow();
         )
             .thenReturn(Collections.emptyList());
 
