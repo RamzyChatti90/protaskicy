@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import java.time.ZoneId;
 import com.protaskicy.IntegrationTest;
 import com.protaskicy.domain.enumeration.TaskStatus;
 import com.protaskicy.service.TaskDashboardService;
