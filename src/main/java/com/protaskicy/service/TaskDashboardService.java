@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,16 @@ public class TaskDashboardService {
         return taskRepository
             .countCompletedTasksByDayForUser(userLogin, startInstant, endInstant)
             .stream()
-            .map(obj -> new TaskCompletionEvolutionDTO((LocalDate) obj[0], (Long) obj[1]))
+            .map(obj -> {
+                LocalDate date = null;
+                if (obj[0] instanceof Date) {
+                    date = ((Date) obj[0]).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                } else if (obj[0] instanceof LocalDate) {
+                    date = (LocalDate) obj[0];
+                }
+                Long count = (Long) obj[1];
+                return new TaskCompletionEvolutionDTO(date, count);
+            })
             .collect(Collectors.toList());
     }
 }
