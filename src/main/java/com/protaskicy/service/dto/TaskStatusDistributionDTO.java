@@ -1,26 +1,27 @@
 package com.protaskicy.service.dto;
 
-import com.protaskicy.domain.enumeration.TaskStatus;
 import java.io.Serializable;
 import java.util.Objects;
 
 public class TaskStatusDistributionDTO implements Serializable {
 
-    private TaskStatus status;
+    private String status;
     private Long count;
 
-    public TaskStatusDistributionDTO() {}
+    public TaskStatusDistributionDTO() {
+        // Empty constructor needed for Jackson
+    }
 
-    public TaskStatusDistributionDTO(TaskStatus status, Long count) {
+    public TaskStatusDistributionDTO(String status, Long count) {
         this.status = status;
         this.count = count;
     }
 
-    public TaskStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(TaskStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
@@ -34,14 +35,11 @@ public class TaskStatusDistributionDTO implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         TaskStatusDistributionDTO that = (TaskStatusDistributionDTO) o;
-        return Objects.equals(status, that.status) && Objects.equals(count, that.count);
+        return Objects.equals(status, that.status) &&
+               Objects.equals(count, that.count);
     }
 
     @Override
@@ -52,8 +50,8 @@ public class TaskStatusDistributionDTO implements Serializable {
     @Override
     public String toString() {
         return "TaskStatusDistributionDTO{" +
-            "status=" + status +
-            ", count=" + count +
-            '}';
+               "status='" + status + '\'' +
+               ", count=" + count +
+               '}';
     }
 }
