@@ -1,6 +1,7 @@
 package com.protaskicy.web.rest;
 
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -111,7 +112,7 @@ class TaskDashboardResourceIT {
         List<TaskCompletionEvolutionDTO> evolution = Arrays.asList(
             new TaskCompletionEvolutionDTO(yesterday, 1L),
             new TaskCompletionEvolutionDTO(today, 2L)
-        );
+        when(mockTaskDashboardService.getTaskCompletionEvolution(anyString(), anyInt())).thenReturn(evolution);
         when(mockTaskDashboardService.getTaskCompletionEvolution(anyInt())).thenReturn(Optional.of(evolution));
 
         restTaskDashboardMockMvc
@@ -127,7 +128,7 @@ class TaskDashboardResourceIT {
     }
 
     @Test
-    void getTaskCompletionEvolution_shouldReturnNotFoundWhenNoEvolution() throws Exception {
+        when(mockTaskDashboardService.getTaskCompletionEvolution(anyString(), anyInt())).thenReturn(Collections.emptyList());
         when(mockTaskDashboardService.getTaskCompletionEvolution(anyInt())).thenReturn(Optional.empty());
 
         restTaskDashboardMockMvc
@@ -138,7 +139,7 @@ class TaskDashboardResourceIT {
     }
 
     @Test
-    void getTaskCompletionEvolution_shouldUseDefaultDaysWhenNotProvided() throws Exception {
+        when(mockTaskDashboardService.getTaskCompletionEvolution(anyString(), eq(7))).thenReturn(Collections.emptyList());
         when(mockTaskDashboardService.getTaskCompletionEvolution(eq(7))).thenReturn(Optional.of(Collections.emptyList()));
 
         restTaskDashboardMockMvc
