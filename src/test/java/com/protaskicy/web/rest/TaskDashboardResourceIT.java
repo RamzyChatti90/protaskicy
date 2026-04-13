@@ -105,7 +105,7 @@ class TaskDashboardResourceIT {
             .perform(get(API_URL + "/task-completion-evolution").with(csrf()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(sameInstant(taskCompletionEvolutionDTOList.get(0).getDate()))))
+            .andExpect(jsonPath("$.[*].date").value(hasItem(sameInstant(taskCompletionEvolutionDTOList.get(0).getDate().atZone(ZoneId.systemDefault())))))
             .andExpect(jsonPath("$.[*].completedTasksCount").value(hasItem(taskCompletionEvolutionDTOList.get(0).getCompletedTasksCount().intValue())));
 
         verify(taskDashboardService, times(1)).getTaskCompletionEvolution();
