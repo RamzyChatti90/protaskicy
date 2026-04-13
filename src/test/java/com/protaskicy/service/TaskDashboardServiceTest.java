@@ -86,16 +86,13 @@ class TaskDashboardServiceTest {
                 any(Instant.class),
                 any(Instant.class)
             )
+        ).thenReturn(
+            Arrays.asList(
+                new Object[] { yesterday, 1L },
+                new Object[] { today, 2L }
             )
-        )
-            .thenReturn(
-                Arrays.asList(
-                    new Object[] { yesterday, 1L },
-                    new Object[] { today, 2L }
-                )
+        );
         List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(2).orElseThrow();
-
-        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(USER_LOGIN, 2);
 
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(
@@ -105,15 +102,15 @@ class TaskDashboardServiceTest {
     }
 
     @Test
+    @Test
+    void getTaskCompletionEvolution_shouldReturnEmptyListWhenNoTasksCompletedFor7Days() {
+        when(
             taskRepository.countCompletedTasksByDayForUser(
                 eq(USER_LOGIN),
                 eq(TaskStatus.DONE),
                 any(Instant.class),
                 any(Instant.class)
             )
-                any(Instant.class),
-                any(Instant.class)
-        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(7).orElseThrow();
         )
             .thenReturn(Collections.emptyList());
 
