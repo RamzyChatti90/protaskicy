@@ -13,9 +13,11 @@ import org.springframework.stereotype.Repository;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("select task from Task task where task.assignedTo.login = ?#{authentication.name}")
     List<Task> findByAssignedToIsCurrentUser();
-    Long countByAssignedToIsCurrentUserLogin(String login);
+    // Corrected method name to adhere to Spring Data JPA conventions
+    Long countByAssignedTo(String login);
 
-    Long countByAssignedToIsCurrentUserLoginAndStatus(String login, com.protaskicy.domain.enumeration.TaskStatus status);
+    // Corrected method name to adhere to Spring Data JPA conventions
+    Long countByAssignedToAndStatus(String login, com.protaskicy.domain.enumeration.TaskStatus status);
 
     @Query("SELECT t.status, COUNT(t) FROM Task t WHERE t.assignedTo.login = ?#{authentication.name} GROUP BY t.status")
     List<Object[]> countTasksByStatusForCurrentUser();
