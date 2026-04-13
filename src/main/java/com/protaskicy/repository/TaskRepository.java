@@ -1,8 +1,11 @@
 package com.protaskicy.repository;
 
 import com.protaskicy.domain.Task;
+import com.protaskicy.domain.enumeration.TaskStatus;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,19 +14,12 @@ import org.springframework.stereotype.Repository;
 @SuppressWarnings("unused")
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    @Query("select task from Task task where task.assignedTo.login = ?#{authentication.name}")
     List<Task> findByAssignedToIsCurrentUser();
-    // Corrected method name to adhere to Spring Data JPA conventions
-    Long countByAssignedTo(String login);
 
-    // Corrected method name to adhere to Spring Data JPA conventions
-    Long countByAssignedToAndStatus(String login, com.protaskicy.domain.enumeration.TaskStatus status);
+    long countByAssignedTo_Login(String login);
 
-    @Query("SELECT t.status, COUNT(t) FROM Task t WHERE t.assignedTo.login = ?#{authentication.name} GROUP BY t.status")
-    List<Object[]> countTasksByStatusForCurrentUser();
+    long countByAssignedTo_LoginAndStatus(String login, TaskStatus status);
 
-    @Query(
-        "SELECT FUNCTION('DATE_TRUNC', 'week', t.createdAt), COUNT(t) FROM Task t WHERE t.assignedTo.login = ?#{authentication.name} AND t.status = 'DONE' GROUP BY FUNCTION('DATE_TRUNC', 'week', t.createdAt) ORDER BY FUNCTION('DATE_TRUNC', 'week', t.createdAt) ASC"
-    )
-    List<Object[]> countCompletedTasksByWeekForCurrentUser();
+    @Query("SELECT CAST(t.createdAt as LocalDate), COUNT(t) FROM Task t WHERE t.assignedTo.login = :login AND t.status = 'DONE' AND t.createdAt >= :startDate AND t.createdAt <= :endDate GROUP BY CAST(t.createdAt as LocalDate) ORDER BY CAST(t.createdAt as LocalDate)")
+    List<Object[]> countCompletedTasksByDayForUser(@Param("login") String login, @Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 }
