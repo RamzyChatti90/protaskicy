@@ -9,9 +9,7 @@ public class TaskStatusDistributionDTO implements Serializable {
     private TaskStatus status;
     private Long count;
 
-    public TaskStatusDistributionDTO() {
-        // Empty constructor needed for Jackson
-    }
+    public TaskStatusDistributionDTO() {}
 
     public TaskStatusDistributionDTO(TaskStatus status, Long count) {
         this.status = status;
@@ -53,6 +51,9 @@ public class TaskStatusDistributionDTO implements Serializable {
 
     @Override
     public String toString() {
-        return "TaskStatusDistributionDTO{" + "status=" + status + ", count=" + count + '}';
+        return "TaskStatusDistributionDTO{" +
+            "status=" + status +
+            ", count=" + count +
+            '}';
     }
 }
