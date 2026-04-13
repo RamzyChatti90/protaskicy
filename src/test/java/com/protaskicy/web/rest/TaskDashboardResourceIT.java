@@ -1,113 +1,131 @@
 package com.protaskicy.web.rest;
 
-import static com.protaskicy.web.rest.TestUtil.sameInstant;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import java.time.ZoneId;
-import com.protaskicy.IntegrationTest;
+
+import com.protaskicy.ProtaskicyApp;
+import com.protaskicy.domain.Task;
+import com.protaskicy.domain.User;
 import com.protaskicy.domain.enumeration.TaskStatus;
-import com.protaskicy.service.TaskDashboardService;
-import com.protaskicy.service.dto.TaskCompletionEvolutionDTO;
-import com.protaskicy.service.dto.TaskStatsDTO;
-import com.protaskicy.service.dto.TaskStatusDistributionDTO;
+import com.protaskicy.repository.TaskRepository;
+import com.protaskicy.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration tests for the {@link TaskDashboardResource} REST controller.
  */
-@IntegrationTest
+@SpringBootTest(classes = ProtaskicyApp.class)
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(username = "testuser", roles = { "USER" })
 class TaskDashboardResourceIT {
 
-    private static final String API_URL = "/api/dashboard";
+    private static final String DEFAULT_LOGIN = "testuser";
 
-    @MockBean
-    private TaskDashboardService taskDashboardService;
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager em;
 
     @Autowired
     private MockMvc restTaskDashboardMockMvc;
 
-    private TaskStatsDTO taskStatsDTO;
-    private List<TaskStatusDistributionDTO> taskStatusDistributionDTOList;
-    private List<TaskCompletionEvolutionDTO> taskCompletionEvolutionDTOList;
+    private User user;
 
     @BeforeEach
-    void setUp() {
-        taskStatsDTO = new TaskStatsDTO();
-        taskStatsDTO.setTotalTasks(10L);
-        taskStatsDTO.setTodoTasks(5L);
-        taskStatsDTO.setInProgressTasks(3L);
-        taskStatsDTO.setDoneTasks(1L);
-        taskStatsDTO.setCancelledTasks(1L);
+    public void initTest() {
+        user = userRepository.findOneByLogin(DEFAULT_LOGIN).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setLogin(DEFAULT_LOGIN);
+            newUser.setPassword("$2a$10$gSAhZrxMllrbgj/kkT9kDugMHseADwekGHd5zHUKXsmittelW4/Ej.oZZDQWGx.i"); // test
+            newUser.setActivated(true);
+            newUser.setEmail("testuser@localhost");
+            newUser.setFirstName("testuser");
+            newUser.setLastName("testuser");
+            newUser.setLangKey("en");
+            em.persist(newUser);
+            em.flush();
+            return newUser;
+        });
 
-        taskStatusDistributionDTOList = new ArrayList<>();
-        taskStatusDistributionDTOList.add(new TaskStatusDistributionDTO(TaskStatus.TODO, 5L));
-        taskStatusDistributionDTOList.add(new TaskStatusDistributionDTO(TaskStatus.DONE, 1L));
+        taskRepository.deleteAll();
 
-        Instant now = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        taskCompletionEvolutionDTOList = new ArrayList<>();
-        taskCompletionEvolutionDTOList.add(new TaskCompletionEvolutionDTO(now.minus(7, ChronoUnit.DAYS), 5L));
-        taskCompletionEvolutionDTOList.add(new TaskCompletionEvolutionDTO(now, 10L));
+        // Create some tasks for testing
+        Task task1 = new Task();
+        task1.setName("Task 1");
+        task1.setStatus(TaskStatus.TODO);
+        task1.setAssignedTo(user);
+        task1.setCreatedAt(Instant.now().minus(2, ChronoUnit.DAYS));
+        taskRepository.save(task1);
+
+        Task task2 = new Task();
+        task2.setName("Task 2");
+        task2.setStatus(TaskStatus.IN_PROGRESS);
+        task2.setAssignedTo(user);
+        task2.setCreatedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        taskRepository.save(task2);
+
+        Task task3 = new Task();
+        task3.setName("Task 3");
+        task3.setStatus(TaskStatus.DONE);
+        task3.setAssignedTo(user);
+        task3.setCreatedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        taskRepository.save(task3);
+
+        Task task4 = new Task();
+        task4.setName("Task 4");
+        task4.setStatus(TaskStatus.DONE);
+        task4.setAssignedTo(user);
+        task4.setCreatedAt(Instant.now());
+        taskRepository.save(task4);
     }
 
     @Test
+    @Transactional
     void getTaskStats() throws Exception {
-        when(taskDashboardService.getTaskStats()).thenReturn(taskStatsDTO);
-
         restTaskDashboardMockMvc
-            .perform(get(API_URL + "/task-stats").with(csrf()))
+            .perform(get("/api/dashboard/task-stats").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.totalTasks").value(taskStatsDTO.getTotalTasks().intValue()))
-            .andExpect(jsonPath("$.todoTasks").value(taskStatsDTO.getTodoTasks().intValue()))
-            .andExpect(jsonPath("$.inProgressTasks").value(taskStatsDTO.getInProgressTasks().intValue()))
-            .andExpect(jsonPath("$.doneTasks").value(taskStatsDTO.getDoneTasks().intValue()))
-            .andExpect(jsonPath("$.cancelledTasks").value(taskStatsDTO.getCancelledTasks().intValue()));
-
-        verify(taskDashboardService, times(1)).getTaskStats();
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath(".totalTasks").value(4))
+            .andExpect(jsonPath(".todoTasks").value(1))
+            .andExpect(jsonPath(".inProgressTasks").value(1))
+            .andExpect(jsonPath(".doneTasks").value(2));
     }
 
     @Test
+    @Transactional
     void getTaskStatusDistribution() throws Exception {
-        when(taskDashboardService.getTaskStatusDistribution()).thenReturn(taskStatusDistributionDTOList);
-
         restTaskDashboardMockMvc
-            .perform(get(API_URL + "/task-status-distribution").with(csrf()))
+            .perform(get("/api/dashboard/task-status-distribution").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*].status").value(hasItem(TaskStatus.TODO.toString())))
-            .andExpect(jsonPath("$.[*].count").value(hasItem(5)));
-
-        verify(taskDashboardService, times(1)).getTaskStatusDistribution();
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[?(@.statusName == 'TODO')].count").value(1))
+            .andExpect(jsonPath("$[?(@.statusName == 'IN_PROGRESS')].count").value(1))
+            .andExpect(jsonPath("$[?(@.statusName == 'DONE')].count").value(2));
     }
 
     @Test
+    @Transactional
     void getTaskCompletionEvolution() throws Exception {
-        when(taskDashboardService.getTaskCompletionEvolution()).thenReturn(taskCompletionEvolutionDTOList);
-
         restTaskDashboardMockMvc
-            .perform(get(API_URL + "/task-completion-evolution").with(csrf()))
+            .perform(get("/api/dashboard/task-completion-evolution").param("periodInDays", "7").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(sameInstant(taskCompletionEvolutionDTOList.get(0).getDate().atZone(ZoneId.systemDefault())))))
-            .andExpect(jsonPath("$.[*].completedTasksCount").value(hasItem(taskCompletionEvolutionDTOList.get(0).getCompletedTasksCount().intValue())));
-
-        verify(taskDashboardService, times(1)).getTaskCompletionEvolution();
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.length()").value(3)); // Expecting 3 days with completed tasks
     }
 }
