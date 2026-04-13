@@ -1,26 +1,29 @@
 package com.protaskicy.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 import com.protaskicy.domain.enumeration.TaskStatus;
 import com.protaskicy.repository.TaskRepository;
-import com.protaskicy.security.SecurityUtils;
 import com.protaskicy.service.dto.TaskCompletionEvolutionDTO;
 import com.protaskicy.service.dto.TaskStatsDTO;
 import com.protaskicy.service.dto.TaskStatusDistributionDTO;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class TaskDashboardServiceTest {
@@ -31,86 +34,87 @@ class TaskDashboardServiceTest {
     @InjectMocks
     private TaskDashboardService taskDashboardService;
 
-    private String currentUserLogin;
+    private static final String USER_LOGIN = "testuser";
 
     @BeforeEach
     void setUp() {
-        currentUserLogin = "testuser";
+        SecurityContextHolder
+            .getContext()
+            .setAuthentication(new UsernamePasswordAuthenticationToken(USER_LOGIN, USER_LOGIN));
     }
 
     @Test
-    void getTaskStats() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(currentUserLogin));
+    void getTaskStats_shouldReturnCorrectStatistics() {
+        when(taskRepository.countByAssignedTo_Login(USER_LOGIN)).thenReturn(10L);
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.TODO)).thenReturn(3L);
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.IN_PROGRESS)).thenReturn(5L);
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.DONE)).thenReturn(2L);
 
-            when(taskRepository.countByAssignedTo(currentUserLogin)).thenReturn(5L);
-            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.TODO)).thenReturn(2L);
-            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS)).thenReturn(1L);
-            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.DONE)).thenReturn(1L);
-            when(taskRepository.countByAssignedToAndStatus(currentUserLogin, TaskStatus.CANCELLED)).thenReturn(1L);
+        TaskStatsDTO result = taskDashboardService.getTaskStats(USER_LOGIN);
 
-            TaskStatsDTO result = taskDashboardService.getTaskStats();
-
-            assertThat(result.getTotalTasks()).isEqualTo(5L);
-            assertThat(result.getTodoTasks()).isEqualTo(2L);
-            assertThat(result.getInProgressTasks()).isEqualTo(1L);
-            assertThat(result.getDoneTasks()).isEqualTo(1L);
-            assertThat(result.getCancelledTasks()).isEqualTo(1L);
-
-            verify(taskRepository, times(1)).countByAssignedTo(currentUserLogin);
-            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.TODO);
-            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.IN_PROGRESS);
-            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.DONE);
-            verify(taskRepository, times(1)).countByAssignedToAndStatus(currentUserLogin, TaskStatus.CANCELLED);
-        }
+        assertThat(result.getTotalTasks()).isEqualTo(10L);
+        assertThat(result.getTodoTasks()).isEqualTo(3L);
+        assertThat(result.getInProgressTasks()).isEqualTo(5L);
+        assertThat(result.getDoneTasks()).isEqualTo(2L);
     }
 
     @Test
-    void getTaskStatusDistribution() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(currentUserLogin));
+    void getTaskStatusDistribution_shouldReturnCorrectDistribution() {
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.TODO)).thenReturn(3L);
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.IN_PROGRESS)).thenReturn(5L);
+        when(taskRepository.countByAssignedTo_LoginAndStatus(USER_LOGIN, TaskStatus.DONE)).thenReturn(2L);
 
-            List<Object[]> mockDistribution = Arrays.asList(
-                new Object[] { TaskStatus.TODO, 2L },
-                new Object[] { TaskStatus.DONE, 3L }
-            );
-            // Assuming countTasksByStatusForCurrentUser() is correctly implemented in TaskRepository
-            when(taskRepository.countTasksByStatusForCurrentUser()).thenReturn(mockDistribution);
+        List<TaskStatusDistributionDTO> result = taskDashboardService.getTaskStatusDistribution(USER_LOGIN);
 
-            List<TaskStatusDistributionDTO> result = taskDashboardService.getTaskStatusDistribution();
-
-            assertThat(result).hasSize(2);
-            assertThat(result).containsExactlyInAnyOrder(
-                new TaskStatusDistributionDTO(TaskStatus.TODO, 2L),
-                new TaskStatusDistributionDTO(TaskStatus.DONE, 3L)
-            );
-
-            verify(taskRepository, times(1)).countTasksByStatusForCurrentUser();
-        }
+        assertThat(result).hasSize(3);
+        assertThat(result).containsExactlyInAnyOrder(
+            new TaskStatusDistributionDTO("TODO", 3L),
+            new TaskStatusDistributionDTO("IN_PROGRESS", 5L),
+            new TaskStatusDistributionDTO("DONE", 2L)
+        );
     }
 
     @Test
-    void getTaskCompletionEvolution() {
-        try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
-            mockedSecurityUtils.when(SecurityUtils::getCurrentUserLogin).thenReturn(Optional.of(currentUserLogin));
+    void getTaskCompletionEvolution_shouldReturnCorrectEvolution() {
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
 
-            Instant now = Instant.now().truncatedTo(ChronoUnit.DAYS);
-            List<Object[]> mockEvolution = Arrays.asList(
-                new Object[] { now.minus(7, ChronoUnit.DAYS), 5L },
-                new Object[] { now, 10L }
-            );
-            // Assuming countCompletedTasksByWeekForCurrentUser() is correctly implemented in TaskRepository
-            when(taskRepository.countCompletedTasksByWeekForCurrentUser()).thenReturn(mockEvolution);
-
-            List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution();
-
-            assertThat(result).hasSize(2);
-            assertThat(result).containsExactlyInAnyOrder(
-                new TaskCompletionEvolutionDTO(now.minus(7, ChronoUnit.DAYS), 5L),
-                new TaskCompletionEvolutionDTO(now, 10L)
+        when(
+            taskRepository.countCompletedTasksByDayForUser(
+                eq(USER_LOGIN),
+                any(Instant.class),
+                any(Instant.class)
+            )
+        )
+            .thenReturn(
+                Arrays.asList(
+                    new Object[] { yesterday, 1L },
+                    new Object[] { today, 2L }
+                )
             );
 
-            verify(taskRepository, times(1)).countCompletedTasksByWeekForCurrentUser();
-        }
+        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(USER_LOGIN, 2);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(
+            new TaskCompletionEvolutionDTO(yesterday, 1L),
+            new TaskCompletionEvolutionDTO(today, 2L)
+        );
+    }
+
+    @Test
+    void getTaskCompletionEvolution_shouldHandleEmptyResult() {
+        when(
+            taskRepository.countCompletedTasksByDayForUser(
+                eq(USER_LOGIN),
+                any(Instant.class),
+                any(Instant.class)
+            )
+        )
+            .thenReturn(Collections.emptyList());
+
+        List<TaskCompletionEvolutionDTO> result = taskDashboardService.getTaskCompletionEvolution(USER_LOGIN, 7);
+
+        assertThat(result).isEmpty();
     }
 }
