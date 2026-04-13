@@ -115,5 +115,4 @@ class TaskDashboardServiceTest {
             verify(taskRepository, times(1)).countCompletedTasksByWeekForCurrentUser();
         }
     }
-    }
 }
